@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LAW_NAME_INFO>
+  <TOTAL_CNT>2</TOTAL_CNT>
+  <RESULT_CODE>SUCCESS</RESULT_CODE>
+  <RECORD>
+    <사건명>업무상과실치사</사건명>
+    <사건번호>2019도12345</사건번호>
+    <선고일자>2020-03-20</선고일자>
+    <법원명>대법원</법원명>
+    <판례상세링크>https://www.law.go.kr/precInfoP.do?precSeq=123456</판례상세링크>
+  </RECORD>
+  <RECORD>
+    <사건명>교통사고로 인한 과실치사</사건명>
+    <사건번호>2020고합7890</사건번호>
+    <선고일자>2021-05-18</선고일자>
+    <법원명>서울중앙지방법원</법원명>
+    <판례상세링크>https://www.law.go.kr/precInfoP.do?precSeq=654321</판례상세링크>
+  </RECORD>
+</LAW_NAME_INFO>
