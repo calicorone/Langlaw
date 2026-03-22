@@ -252,6 +252,125 @@
       font-size: .78rem;
       color: var(--muted);
     }
+
+    /* ── settings button ── */
+    #settings-btn {
+      margin-left: auto;
+      background: rgba(255,255,255,.12);
+      border: 1.5px solid rgba(255,255,255,.22);
+      color: #fff;
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: var(--trans);
+    }
+    #settings-btn:hover { background: rgba(255,255,255,.22); }
+    #settings-btn .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+      display: none;
+    }
+    #settings-btn .dot.warn { display: block; }
+
+    /* ── modal overlay ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(10,15,30,.55);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border-radius: 14px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.28);
+      width: 460px;
+      max-width: calc(100vw - 32px);
+      padding: 32px;
+    }
+    .modal h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .modal .modal-sub {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+      line-height: 1.55;
+    }
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .field-wrap {
+      display: flex;
+      gap: 8px;
+    }
+    .field input {
+      flex: 1;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: monospace;
+      font-size: .88rem;
+      color: var(--text);
+      outline: none;
+      transition: var(--trans);
+    }
+    .field input:focus {
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(28,43,74,.1);
+    }
+    .field input.set { border-color: #22c55e; background: #f0fdf4; }
+    .toggle-vis {
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 0 12px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: .8rem;
+      transition: var(--trans);
+      white-space: nowrap;
+    }
+    .toggle-vis:hover { border-color: var(--navy); color: var(--navy); }
+    .field-hint {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+    .field-hint a { color: var(--navy); }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .modal-actions button.primary { flex: 1; justify-content: center; }
+    .modal-actions button.secondary { padding: 10px 18px; }
+    #save-status {
+      font-size: .82rem;
+      color: #22c55e;
+      text-align: center;
+      margin-top: 12px;
+      min-height: 18px;
+    }
   </style>
 </head>
 <body>
@@ -268,7 +387,50 @@
     <circle cx="32" cy="10" r="3" fill="white"/>
   </svg>
   <h1>Langlaw <span>Legal AI</span></h1>
+  <button id="settings-btn" onclick="openSettings()">
+    <div class="dot" id="settings-dot"></div>
+    ⚙ API 키 설정
+  </button>
 </header>
+
+<!-- settings modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="maybeClose(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="API 키 설정">
+    <h2>API 키 설정</h2>
+    <p class="modal-sub">키는 프로젝트 루트의 <code>.env</code> 파일에 저장되며 서버에서만 사용됩니다.</p>
+
+    <div class="field">
+      <label>OpenAI API Key</label>
+      <div class="field-wrap">
+        <input type="password" id="inp-openai" placeholder="sk-..." autocomplete="off" />
+        <button class="toggle-vis" onclick="toggleVis('inp-openai', this)">보기</button>
+      </div>
+      <p class="field-hint">
+        <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>에서 발급
+      </p>
+    </div>
+
+    <div class="field">
+      <label>law.go.kr OC ID</label>
+      <div class="field-wrap">
+        <input type="password" id="inp-ocid" placeholder="your_oc_id" autocomplete="off" />
+        <button class="toggle-vis" onclick="toggleVis('inp-ocid', this)">보기</button>
+      </div>
+      <p class="field-hint">
+        <a href="https://www.law.go.kr/DRF/UserMain.do" target="_blank" rel="noopener">law.go.kr/DRF</a>에서 무료 발급
+      </p>
+    </div>
+
+    <div class="modal-actions">
+      <button class="secondary" onclick="closeSettings()">취소</button>
+      <button class="primary" onclick="saveSettings()">
+        <div class="spinner" id="save-spinner"></div>
+        <span id="save-label">저장</span>
+      </button>
+    </div>
+    <div id="save-status"></div>
+  </div>
+</div>
 
 <main>
   <!-- input -->
@@ -431,6 +593,83 @@
     document.getElementById('case-input').addEventListener('keydown', e => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') runAnalysis();
     });
+    loadSettingsStatus();
+  });
+
+  // ── settings modal ──────────────────────────────────────────────
+  async function loadSettingsStatus() {
+    try {
+      const res = await fetch('/api/settings');
+      const data = await res.json();
+      const allSet = Object.values(data).every(Boolean);
+      document.getElementById('settings-dot').classList.toggle('warn', !allSet);
+      // pre-fill placeholders to show which keys are already saved
+      if (data.OPENAI_API_KEY) document.getElementById('inp-openai').placeholder = '●●●●●●●● (저장됨)';
+      if (data.OC_ID)          document.getElementById('inp-ocid').placeholder   = '●●●●●●●● (저장됨)';
+    } catch (_) {}
+  }
+
+  function openSettings() {
+    document.getElementById('modal-overlay').classList.add('open');
+    document.getElementById('save-status').textContent = '';
+  }
+  function closeSettings() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+  function maybeClose(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeSettings();
+  }
+
+  function toggleVis(id, btn) {
+    const inp = document.getElementById(id);
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.textContent = show ? '숨기기' : '보기';
+  }
+
+  async function saveSettings() {
+    const openai = document.getElementById('inp-openai').value.trim();
+    const ocid   = document.getElementById('inp-ocid').value.trim();
+    if (!openai && !ocid) {
+      document.getElementById('save-status').textContent = '변경할 키를 하나 이상 입력해 주세요.';
+      document.getElementById('save-status').style.color = '#ef4444';
+      return;
+    }
+    const btn = document.querySelector('.modal-actions button.primary');
+    btn.disabled = true;
+    document.getElementById('save-label').textContent = '저장 중…';
+    document.getElementById('save-spinner').style.display = 'block';
+    btn.classList.add('loading');
+    try {
+      const body = {};
+      if (openai) body.OPENAI_API_KEY = openai;
+      if (ocid)   body.OC_ID = ocid;
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '저장 실패');
+      document.getElementById('inp-openai').value = '';
+      document.getElementById('inp-ocid').value = '';
+      document.getElementById('save-status').style.color = '#22c55e';
+      document.getElementById('save-status').textContent = '✓ 저장 완료 — .env 파일에 기록됐습니다.';
+      await loadSettingsStatus();
+    } catch (err) {
+      document.getElementById('save-status').style.color = '#ef4444';
+      document.getElementById('save-status').textContent = '오류: ' + err.message;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      document.getElementById('save-label').textContent = '저장';
+      document.getElementById('save-spinner').style.display = 'none';
+    }
+  }
+
+  // close modal on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeSettings();
   });
 </script>
 
