@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Langlaw">
+  <!-- stem -->
+  <rect x="30.5" y="10" width="3" height="44" rx="1.5" fill="#1C2B4A"/>
+  <!-- crossbar -->
+  <rect x="12" y="18" width="40" height="3" rx="1.5" fill="#1C2B4A"/>
+  <!-- left arm -->
+  <rect x="12.5" y="21" width="2.5" height="16" rx="1.25" fill="#1C2B4A"/>
+  <!-- right arm -->
+  <rect x="49" y="21" width="2.5" height="16" rx="1.25" fill="#1C2B4A"/>
+  <!-- left pan -->
+  <circle cx="13.75" cy="38.5" r="5.5" fill="#1C2B4A"/>
+  <!-- right pan -->
+  <circle cx="50.25" cy="38.5" r="5.5" fill="#1C2B4A"/>
+  <!-- top pivot -->
+  <circle cx="32" cy="10" r="3" fill="#1C2B4A"/>
+</svg>

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Langlaw</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/static/favicon.ico" sizes="any" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #1C2B4A;
+      --navy-2: #243560;
+      --gold:   #C9A227;
+      --bg:     #F5F6FA;
+      --surface:#FFFFFF;
+      --border: #E2E5EF;
+      --text:   #1C2B4A;
+      --muted:  #6B7491;
+      --radius: 12px;
+      --shadow: 0 2px 12px rgba(28,43,74,.10);
+      --trans:  all .25s ease;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── header ── */
+    header {
+      background: var(--navy);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 32px;
+      height: 64px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.18);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header svg { flex-shrink: 0; }
+    header h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: .02em; }
+    header span { font-size: .8rem; color: rgba(255,255,255,.55); margin-left: 2px; }
+
+    /* ── layout ── */
+    main {
+      flex: 1;
+      max-width: 900px;
+      width: 100%;
+      margin: 48px auto;
+      padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ── card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 32px;
+    }
+    .card-title {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    /* ── input area ── */
+    #input-card textarea {
+      width: 100%;
+      min-height: 130px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: inherit;
+      font-size: .97rem;
+      color: var(--text);
+      resize: vertical;
+      transition: var(--trans);
+      outline: none;
+      line-height: 1.65;
+    }
+    #input-card textarea:focus {
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(28,43,74,.12);
+    }
+    #input-card textarea::placeholder { color: var(--muted); }
+
+    .btn-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    button.primary {
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      padding: 11px 28px;
+      border-radius: 8px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--trans);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    button.primary:hover:not(:disabled) { background: var(--navy-2); }
+    button.primary:disabled { opacity: .55; cursor: not-allowed; }
+    button.secondary {
+      background: none;
+      border: 1.5px solid var(--border);
+      color: var(--muted);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: .9rem;
+      cursor: pointer;
+      transition: var(--trans);
+    }
+    button.secondary:hover { border-color: var(--navy); color: var(--navy); }
+
+    #status-msg {
+      font-size: .85rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    /* ── spinner ── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    .loading .spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── results ── */
+    #results { display: none; flex-direction: column; gap: 20px; }
+    #results.visible { display: flex; }
+
+    /* ── tabs ── */
+    .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); }
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 12px 22px;
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      position: relative;
+      transition: var(--trans);
+    }
+    .tab-btn::after {
+      content: '';
+      position: absolute;
+      left: 0; bottom: -2px;
+      width: 100%; height: 2px;
+      background: var(--navy);
+      opacity: 0;
+      transition: var(--trans);
+    }
+    .tab-btn.active { color: var(--navy); }
+    .tab-btn.active::after { opacity: 1; }
+    .tab-panel { display: none; padding-top: 20px; }
+    .tab-panel.active { display: block; }
+
+    /* ── keyword chips ── */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      background: rgba(28,43,74,.07);
+      color: var(--navy);
+      font-size: .82rem;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 999px;
+    }
+
+    /* ── case list ── */
+    .case-list { display: flex; flex-direction: column; gap: 14px; }
+    .case-item {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+    .case-item .case-name { font-weight: 700; font-size: .95rem; margin-bottom: 4px; }
+    .case-item .case-meta { font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+    .case-item a {
+      font-size: .8rem;
+      color: var(--gold);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .case-item a:hover { text-decoration: underline; }
+
+    /* ── law list ── */
+    .law-list { display: flex; flex-direction: column; gap: 14px; }
+    .law-item {
+      border-left: 3px solid var(--navy);
+      padding: 10px 16px;
+      background: rgba(28,43,74,.03);
+      border-radius: 0 8px 8px 0;
+    }
+    .law-item .law-header {
+      font-weight: 700;
+      font-size: .88rem;
+      margin-bottom: 4px;
+      color: var(--navy);
+    }
+    .law-item .law-body { font-size: .85rem; color: var(--text); line-height: 1.65; }
+
+    /* ── judgment ── */
+    #judgment-text {
+      font-size: .97rem;
+      line-height: 1.85;
+      white-space: pre-wrap;
+      color: var(--text);
+    }
+
+    /* ── empty / error ── */
+    .empty { color: var(--muted); font-size: .9rem; padding: 12px 0; }
+    .error-banner {
+      background: #FFF1F0;
+      border: 1px solid #FFCCC7;
+      color: #A8071A;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: .9rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <!-- inline favicon SVG (white version for header) -->
+  <svg width="30" height="30" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect x="30.5" y="10" width="3" height="44" rx="1.5" fill="white"/>
+    <rect x="12" y="18" width="40" height="3" rx="1.5" fill="white"/>
+    <rect x="12.5" y="21" width="2.5" height="16" rx="1.25" fill="white"/>
+    <rect x="49" y="21" width="2.5" height="16" rx="1.25" fill="white"/>
+    <circle cx="13.75" cy="38.5" r="5.5" fill="white"/>
+    <circle cx="50.25" cy="38.5" r="5.5" fill="white"/>
+    <circle cx="32" cy="10" r="3" fill="white"/>
+  </svg>
+  <h1>Langlaw <span>Legal AI</span></h1>
+</header>
+
+<main>
+  <!-- input -->
+  <div class="card" id="input-card">
+    <p class="card-title">사건 설명</p>
+    <textarea id="case-input" placeholder="사건을 구체적으로 설명해 주세요. 예: 운전 중 신호를 위반하여 보행자를 치어 사망하게 된 사건입니다."></textarea>
+    <div class="btn-row">
+      <button class="primary" id="analyze-btn" onclick="runAnalysis()">
+        <div class="spinner" id="spinner"></div>
+        <span id="btn-label">분석 실행</span>
+      </button>
+      <button class="secondary" onclick="clearAll()">초기화</button>
+      <span id="status-msg"></span>
+    </div>
+  </div>
+
+  <!-- error -->
+  <div class="error-banner" id="error-box" style="display:none"></div>
+
+  <!-- results -->
+  <div class="card" id="results">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('keywords', this)">키워드</button>
+      <button class="tab-btn" onclick="switchTab('cases', this)">판례</button>
+      <button class="tab-btn" onclick="switchTab('laws', this)">법령</button>
+      <button class="tab-btn" onclick="switchTab('judgment', this)">판단 요약</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-keywords">
+      <div class="chips" id="keywords-chips"></div>
+    </div>
+
+    <div class="tab-panel" id="tab-cases">
+      <div class="case-list" id="cases-list"></div>
+    </div>
+
+    <div class="tab-panel" id="tab-laws">
+      <div class="law-list" id="laws-list"></div>
+    </div>
+
+    <div class="tab-panel" id="tab-judgment">
+      <p id="judgment-text"></p>
+    </div>
+  </div>
+</main>
+
+<footer>Langlaw &mdash; AI 법률 분석 도구</footer>
+
+<script>
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  function setLoading(on) {
+    const btn = document.getElementById('analyze-btn');
+    const lbl = document.getElementById('btn-label');
+    const sp  = document.getElementById('spinner');
+    btn.disabled = on;
+    btn.classList.toggle('loading', on);
+    lbl.textContent = on ? '분석 중…' : '분석 실행';
+    sp.style.display = on ? 'block' : 'none';
+    document.getElementById('status-msg').textContent = on ? 'API 호출 중, 잠시 기다려 주세요.' : '';
+  }
+
+  function clearAll() {
+    document.getElementById('case-input').value = '';
+    document.getElementById('results').classList.remove('visible');
+    document.getElementById('error-box').style.display = 'none';
+    document.getElementById('status-msg').textContent = '';
+  }
+
+  async function runAnalysis() {
+    const text = document.getElementById('case-input').value.trim();
+    if (!text) {
+      document.getElementById('case-input').focus();
+      return;
+    }
+
+    setLoading(true);
+    document.getElementById('results').classList.remove('visible');
+    document.getElementById('error-box').style.display = 'none';
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ case_description: text }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || '알 수 없는 오류가 발생했습니다.');
+      }
+
+      renderResults(data);
+    } catch (err) {
+      const box = document.getElementById('error-box');
+      box.textContent = '오류: ' + err.message;
+      box.style.display = 'block';
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function renderResults(data) {
+    // keywords
+    const kc = document.getElementById('keywords-chips');
+    kc.innerHTML = '';
+    (data.keywords || []).forEach(kw => {
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.textContent = kw;
+      kc.appendChild(chip);
+    });
+    if (!data.keywords?.length) kc.innerHTML = '<p class="empty">키워드 없음</p>';
+
+    // cases
+    const cl = document.getElementById('cases-list');
+    cl.innerHTML = '';
+    (data.cases || []).forEach(c => {
+      cl.innerHTML += `
+        <div class="case-item">
+          <div class="case-name">${esc(c['사건명'])}</div>
+          <div class="case-meta">${esc(c['사건번호'])} &middot; ${esc(c['선고일자'])} &middot; ${esc(c['법원명'])}</div>
+          <a href="${esc(c['판례상세링크'])}" target="_blank" rel="noopener">판례 전문 보기 &rarr;</a>
+        </div>`;
+    });
+    if (!data.cases?.length) cl.innerHTML = '<p class="empty">검색된 판례가 없습니다.</p>';
+
+    // laws
+    const ll = document.getElementById('laws-list');
+    ll.innerHTML = '';
+    (data.laws || []).forEach(l => {
+      ll.innerHTML += `
+        <div class="law-item">
+          <div class="law-header">${esc(l['조문번호'])} ${esc(l['제목'])}</div>
+          <div class="law-body">${esc(l['내용'])}</div>
+        </div>`;
+    });
+    if (!data.laws?.length) ll.innerHTML = '<p class="empty">매칭된 법령이 없습니다.</p>';
+
+    // judgment
+    document.getElementById('judgment-text').textContent = data.judgment || '(결과 없음)';
+
+    document.getElementById('results').classList.add('visible');
+
+    // switch to judgment tab automatically
+    document.querySelectorAll('.tab-btn')[3].click();
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // allow Ctrl+Enter / Cmd+Enter to submit
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('case-input').addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') runAnalysis();
+    });
+  });
+</script>
+
+</body>
+</html>

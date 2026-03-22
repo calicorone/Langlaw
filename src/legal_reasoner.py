@@ -1,14 +1,43 @@
-from src.keyword_extractor import extract_keywords_from_case
-from src.case_search_api import fetch_case_laws
+from pathlib import Path
 import json
+import re
+
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
+from src.keyword_extractor import extract_keywords_from_case
+from src.case_search_api import fetch_case_laws
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+_LAW_JSON = _REPO_ROOT / "data" / "형법.json"
+
 llm = ChatOpenAI(temperature=0)
 
+
 def load_laws():
-    with open("data/\uD615\uBC95.json", "r", encoding="utf-8") as f:
+    with open(_LAW_JSON, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def normalize_keywords(raw):
+    if raw is None:
+        return []
+    if isinstance(raw, list):
+        return [str(x).strip() for x in raw if str(x).strip()]
+    s = str(raw).strip()
+    if not s:
+        return []
+    s = s.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    m = re.search(r"\[[\s\S]*?\]", s)
+    if m:
+        try:
+            arr = json.loads(m.group())
+            if isinstance(arr, list):
+                return [str(x).strip() for x in arr if str(x).strip()]
+        except json.JSONDecodeError:
+            pass
+    return [s]
+
 
 def find_laws_by_keywords(keywords, law_data, max_results=5):
     result = []
@@ -20,23 +49,22 @@ def find_laws_by_keywords(keywords, law_data, max_results=5):
                     return result
     return result
 
-def summarize_case(case_description: str):
-    print("▶ 사건 설명:", case_description)
 
-    # 1. 키워드 추출
-    keywords = extract_keywords_from_case(case_description)
-    print("🔍 추출된 키워드:", keywords)
+def analyze_case(case_description: str):
+    text = (case_description or "").strip()
+    if not text:
+        raise ValueError("사건 설명을 입력해 주세요.")
 
-    # 2. 관련 판례 검색
+    keywords_raw = extract_keywords_from_case(text)
+    keywords = normalize_keywords(keywords_raw)
+
     all_cases = []
     for kw in keywords:
         all_cases += fetch_case_laws(kw, max_results=1)
 
-    # 3. 관련 법령 검색 (제한된 수로 필터링)
     law_data = load_laws()
     matched_laws = find_laws_by_keywords(keywords, law_data, max_results=5)
 
-    # 4. LLM에 전달할 템플릿
     prompt = ChatPromptTemplate.from_messages([
         ("system", "너는 법률 상담 전문가야. 사용자 사건 설명, 판례, 관련 법령을 바탕으로 판단을 내려줘."),
         ("human", """
@@ -58,12 +86,27 @@ def summarize_case(case_description: str):
 
     chain = prompt | llm
     result = chain.invoke({
-        "case": case_description,
+        "case": text,
         "cases": case_text,
         "laws": law_text
     })
 
-    print("\n🧠 LLM 판단 요약:\n")
-    print(result.content)
+    return {
+        "case_description": text,
+        "keywords_raw": keywords_raw,
+        "keywords": keywords,
+        "cases": all_cases,
+        "laws": matched_laws,
+        "judgment": result.content,
+    }
 
-__all__ = ["summarize_case"]
+
+def summarize_case(case_description: str):
+    r = analyze_case(case_description)
+    print("▶ 사건 설명:", r["case_description"])
+    print("🔍 추출된 키워드:", r["keywords_raw"])
+    print("\n🧠 LLM 판단 요약:\n")
+    print(r["judgment"])
+
+
+__all__ = ["summarize_case", "analyze_case", "load_laws", "find_laws_by_keywords"]
